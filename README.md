@@ -11,7 +11,7 @@ The primary focus of this project is on:
 -Hallucination avoidance
 -Manual evaluation and reasoning
 
-Setup Instructions
+#Setup Instructions
 1. Clone the Repository
 ```
 git clone <your-repo-url>
@@ -261,4 +261,5 @@ Final Notes
 
 This project prioritizes clarity, grounding, and evaluation reasoning over UI or scale.
 It demonstrates how careful prompt design and retrieval constraints can significantly reduce hallucinations in LLM-based systems.
+
 
