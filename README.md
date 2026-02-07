@@ -59,9 +59,9 @@ The system follows a modular Retrieval-Augmented Generation (RAG) architecture. 
 Purpose: Load raw policy documents, clean text, and split it into retrievable chunks.
 
 Key files:
-
-•src/ingestion/pipeline.py
-
+```
+src/ingestion/pipeline.py
+```
   •Loads policy documents from data/raw/
   •Cleans and normalizes text
   •Applies tokenizer-based chunking with overlap
@@ -75,13 +75,13 @@ Overlapping chunks preserve context while remaining within embedding limits.
 Purpose: Convert text chunks into vector embeddings and store them for semantic search.
 
 Key files:
-
-•src/retrieval/embedder.py
-
+```
+src/retrieval/embedder.py
+```
   •Generates embeddings using a local sentence-transformers model
-
-•src/retrieval/retriever.py
-
+```
+src/retrieval/retriever.py
+```
   •Indexes embeddings into a Chroma vector database
   •Performs top-k semantic retrieval for user queries
 
@@ -93,15 +93,18 @@ Local embeddings avoid API quota limits and make the system reproducible.
 Purpose: Retrieve relevant document chunks and generate grounded answers.
 
 Key files:
-
-•src/qa/qa_pipeline.py
+```
+src/qa/qa_pipeline.py
+```
   •Orchestrates retrieval and answer generation
-
-•src/qa/answerer.py
+```
+src/qa/answerer.py
+```
   •Handles LLM calls via OpenRouter
   •Applies strict prompt rules to prevent hallucination
-
-•src/qa/prompts.py
+```
+src/qa/prompts.py
+```
   •Stores prompt versions and supports prompt iteration
 
 Why this matters:
@@ -112,14 +115,14 @@ Strict prompt design ensures the model answers only from retrieved context and h
 Purpose: Measure answer quality and hallucination behavior.
 
 Key files:
-
-•eval/run_eval.py
-
+```
+eval/run_eval.py
+```
   •Runs ingestion, indexing, and QA on a curated evaluation set
   •Prompts the evaluator to score responses manually
-
-•eval/evaluation.md
-
+```
+eval/evaluation.md
+```
   •Records evaluation results using a simple rubric (✅ / ⚠️ / ❌)
 
 Why this matters:
@@ -258,3 +261,4 @@ Final Notes
 
 This project prioritizes clarity, grounding, and evaluation reasoning over UI or scale.
 It demonstrates how careful prompt design and retrieval constraints can significantly reduce hallucinations in LLM-based systems.
+
