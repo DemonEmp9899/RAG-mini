@@ -6,12 +6,12 @@ The system retrieves relevant document sections and generates grounded, non-hall
 
 The primary focus of this project is on:
 
--Prompt engineering and iteration
--Retrieval grounding
--Hallucination avoidance
--Manual evaluation and reasoning
+- Prompt engineering and iteration
+- Retrieval grounding
+- Hallucination avoidance
+- Manual evaluation and reasoning
 
-#Setup Instructions
+# Setup Instructions
 1. Clone the Repository
 ```
 git clone <your-repo-url>
@@ -34,8 +34,8 @@ OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxxxxxxxxx
 ```
 
 Note:
--Embeddings are generated locally using sentence-transformers
--OpenRouter is used only for LLM inference
+- Embeddings are generated locally using sentence-transformers
+- OpenRouter is used only for LLM inference
 
 Running the Project
 Run the complete pipeline with:
@@ -44,13 +44,13 @@ python main.py
 ```
 This will:
 
--Ingest and chunk policy documents
--Index embeddings into the vector database
--Start an interactive QA session
+- Ingest and chunk policy documents
+- Index embeddings into the vector database
+- Start an interactive QA session
 
 Type exit to quit.
 
-Architecture Overview
+# Architecture Overview
 
 The system follows a modular Retrieval-Augmented Generation (RAG) architecture. Each stage of the pipeline is implemented in a dedicated module to ensure clarity and separation of concerns.
 
@@ -62,10 +62,10 @@ Key files:
 ```
 src/ingestion/pipeline.py
 ```
-  •Loads policy documents from data/raw/
-  •Cleans and normalizes text
-  •Applies tokenizer-based chunking with overlap
-  •Saves processed chunks for downstream use
+  - Loads policy documents from data/raw/
+  - Cleans and normalizes text
+  - Applies tokenizer-based chunking with overlap
+  - Saves processed chunks for downstream use
 
 Why this matters:
 Overlapping chunks preserve context while remaining within embedding limits.
@@ -78,12 +78,12 @@ Key files:
 ```
 src/retrieval/embedder.py
 ```
-  •Generates embeddings using a local sentence-transformers model
+  - Generates embeddings using a local sentence-transformers model
 ```
 src/retrieval/retriever.py
 ```
-  •Indexes embeddings into a Chroma vector database
-  •Performs top-k semantic retrieval for user queries
+  - Indexes embeddings into a Chroma vector database
+  - Performs top-k semantic retrieval for user queries
 
 Why this matters:
 Local embeddings avoid API quota limits and make the system reproducible.
@@ -96,16 +96,16 @@ Key files:
 ```
 src/qa/qa_pipeline.py
 ```
-  •Orchestrates retrieval and answer generation
+  - Orchestrates retrieval and answer generation
 ```
 src/qa/answerer.py
 ```
-  •Handles LLM calls via OpenRouter
-  •Applies strict prompt rules to prevent hallucination
+  - Handles LLM calls via OpenRouter
+  - Applies strict prompt rules to prevent hallucination
 ```
 src/qa/prompts.py
 ```
-  •Stores prompt versions and supports prompt iteration
+  - Stores prompt versions and supports prompt iteration
 
 Why this matters:
 Strict prompt design ensures the model answers only from retrieved context and handles missing information safely.
@@ -118,12 +118,12 @@ Key files:
 ```
 eval/run_eval.py
 ```
-  •Runs ingestion, indexing, and QA on a curated evaluation set
-  •Prompts the evaluator to score responses manually
+  - Runs ingestion, indexing, and QA on a curated evaluation set
+  - Prompts the evaluator to score responses manually
 ```
 eval/evaluation.md
 ```
-  •Records evaluation results using a simple rubric (✅ / ⚠️ / ❌)
+  - Records evaluation results using a simple rubric (✅ / ⚠️ / ❌)
 
 Why this matters:
 Manual evaluation provides qualitative insight into model behavior, which is appropriate for small datasets.
@@ -134,11 +134,57 @@ Purpose: Provide a single command to run the system end-to-end.
 
 Key file:
 
-•main.py
-  •Runs ingestion and indexing
-  •Launches an interactive QA loop for custom queries
+- main.py
+  - Runs ingestion and indexing
+  - Launches an interactive QA loop for custom queries
+ 
+# Chunking Strategy and Design Choices
+The system uses tokenizer-based chunking with the following parameters:
+```
+chunk_size = 400 tokens
+overlap = 50 tokens
+min_chunk_size = 100 tokens
+```
+Why a Chunk Size of 400 Tokens?
 
-Prompt Engineering
+A chunk size of 400 tokens was chosen as a balance between:
+- Semantic completeness: Policy rules often span multiple sentences or bullet points. A 400-token window is large enough to capture a full policy clause without splitting critical conditions.
+- Retrieval precision: Smaller chunks improve semantic matching during vector search and reduce the risk of retrieving unrelated content.
+- Embedding efficiency: 400 tokens comfortably fit within modern embedding model limits while keeping vector representations focused.
+
+This size works particularly well for structured policy documents containing lists, exceptions, and conditional rules.
+
+Why an Overlap of 50 Tokens?
+
+An overlap of 50 tokens ensures that:
+
+- Sentences or rules that cross chunk boundaries are not lost.
+- Context continuity is preserved between adjacent chunks.
+- Retrieval remains robust when questions refer to boundary-spanning information (e.g., eligibility conditions followed by exceptions).
+
+The overlap is intentionally kept small to avoid excessive duplication while still preserving meaning.
+
+Why a Minimum Chunk Size of 100 Tokens?
+
+Very small chunks often:
+
+- Lack sufficient semantic information
+- Produce weak or noisy embeddings
+- Increase retrieval false positives
+
+Setting a minimum chunk size of 100 tokens prevents indexing fragments that are too short to be meaningful on their own (e.g., headers or trailing sentences).
+
+Why Token-Based (Not Character-Based) Chunking?
+
+Token-based chunking ensures:
+
+- Consistency with embedding model behavior
+- Accurate control over chunk size relative to model limits
+- More predictable retrieval performance across documents
+
+This is especially important when working with transformer-based embedding models
+
+# Prompt Engineering
 Prompt v1 (Initial)
 ```
 You are a helpful assistant answering questions based on the provided documents.
@@ -153,10 +199,10 @@ Answer:
 ```
 Observed Issues:
 
-  •No explicit restriction on outside knowledge
-  •No guidance for missing information
-  •Inconsistent answer structure
-  •Occasional speculative responses
+  - No explicit restriction on outside knowledge
+  - No guidance for missing information
+  - Inconsistent answer structure
+  - Occasional speculative responses
 
 Prompt v2 (Improved – Final)
 ```
@@ -199,41 +245,41 @@ Example
 
 Question: Does the refund policy mention international orders?
 
-•Prompt v1 Output:
+- Prompt v1 Output:
   “Refund policies may vary for international orders.” ❌
 
-•Prompt v2 Output:
+- Prompt v2 Output:
   “The provided documents do not contain sufficient information to answer this question.” ✅
 
 Evaluation
 Evaluation Method
 
 •Manual evaluation (recommended for small datasets)
-•Curated set of answerable, partially answerable, and unanswerable questions
-•Metrics:
-  •Accuracy
-  •Hallucination avoidance
-  •Answer clarity
-•Rubric: ✅ / ⚠️ / ❌
+- Curated set of answerable, partially answerable, and unanswerable questions
+- Metrics:
+  - Accuracy
+  - Hallucination avoidance
+  - Answer clarity
+- Rubric: ✅ / ⚠️ / ❌
 
-Evaluation Summary
+# Evaluation Summary
 ```
 | Question Type                    | Accuracy | Hallucination Avoidance | Clarity |
 | -------------------------------- | -------- | ----------------------- | ------- |
-| Refund window                    | ✅        | ✅                       | ✅       |
-| Refund eligibility               | ✅        | ✅                       | ✅       |
-| Non-refundable items             | ✅        | ✅                       | ✅       |
-| Subscription cancellation midway | ⚠️        | ✅                       | ✅       |
-| Emergency service cancellations  | ❌        | ✅                       | ✅       |
-| International refunds            | ❌        | ✅                       | ✅       |
-| Weekend/holiday processing       | ❌        | ✅                       | ✅       |
+| Refund window                    | ✅        | ✅                    | ✅      |
+| Refund eligibility               | ✅        | ✅                    | ✅      |
+| Non-refundable items             | ✅        | ✅                    | ✅      |
+| Subscription cancellation midway | ⚠️        | ✅                    | ✅      |
+| Emergency service cancellations  | ❌        | ✅                    | ✅      |
+| International refunds            | ❌        | ✅                    | ✅      |
+| Weekend/holiday processing       | ❌        | ✅                    | ✅      |
 
 ```
 
 Key Observation:
 Out-of-scope questions consistently triggered safe refusals instead of hallucinated answers.
 
-Edge Case Handling
+# Edge Case Handling
 
 No relevant documents retrieved
 → Safe fallback response
@@ -241,25 +287,26 @@ No relevant documents retrieved
 Question outside the knowledge base
 → Explicit refusal without speculation
 
-Key Trade-offs
+# Key Trade-offs
 
-•Local embeddings were used to avoid API quota limits and improve reproducibility
-•Manual evaluation was chosen over automated metrics due to small dataset size
-•OCR was avoided to focus on RAG design rather than document digitization
+- Local embeddings were used to avoid API quota limits and improve reproducibility
+- Manual evaluation was chosen over automated metrics due to small dataset size
+- OCR was avoided to focus on RAG design rather than document digitization
 
-Future Improvements
+# Future Improvements
 
 With more time, the system could be extended with:
 
-•Chunk reranking for improved retrieval recall
-•Query intent classification
-•Structured JSON outputs
-•Automated evaluation metrics
-•Logging and tracing for deeper analysis
+  - Chunk reranking for improved retrieval recall
+  - Query intent classification
+  - Structured JSON outputs
+  - Automated evaluation metrics
+  - Logging and tracing for deeper analysis
 
-Final Notes
+# Final Notes
 
 This project prioritizes clarity, grounding, and evaluation reasoning over UI or scale.
 It demonstrates how careful prompt design and retrieval constraints can significantly reduce hallucinations in LLM-based systems.
+
 
 
