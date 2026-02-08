@@ -133,8 +133,9 @@ Manual evaluation provides qualitative insight into model behavior, which is app
 Purpose: Provide a single command to run the system end-to-end.
 
 Key file:
-
-- main.py
+```
+ main.py
+```
   - Runs ingestion and indexing
   - Launches an interactive QA loop for custom queries
  
@@ -307,6 +308,7 @@ With more time, the system could be extended with:
 
 This project prioritizes clarity, grounding, and evaluation reasoning over UI or scale.
 It demonstrates how careful prompt design and retrieval constraints can significantly reduce hallucinations in LLM-based systems.
+
 
 
 
